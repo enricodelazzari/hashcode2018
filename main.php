@@ -6,7 +6,7 @@ $filename = $argv[1];
 $array = [];
 
 $array = fileToArray($filename);
-var_dump($array);
+//var_dump($array);
 
   // FUNCTIONS
 function fileToArray($filename)
@@ -35,6 +35,8 @@ function arrayToFile($array) {
   $B = $array[0][4]; // bonus
   $T = $array[0][5]; // steps
 
+  $cars = []; // array di Car
+
   unset($array[0]);
   $rides = []; // array di Ride
   foreach($array as $rows) {
@@ -51,30 +53,43 @@ function arrayToFile($array) {
   }
 
   foreach(range(0, $F-1) as $n) {
-    $cars[] = new Car();
+    $car = new Car();
+    $car->id = $n;
+    $cars[] = $car;
   }
-  $cars = []; // array di Car
   $ridesPerCar = []; // array di associazioni tra Car e Ride
 
   //Ciclo principale
   foreach(range(0, $T-1) as $t) {
     $stepsLeft = $T - $t - 1;
+
     foreach($cars as $car) {
       if($car->isFree()) {
-        $car->isFree = false;
         // sort travel by distance  
-        usort($rides, ‘sortDistance’);
+        usort($rides, 'sortDistance');
         // get only possible travels
-        $possibleTravels = array_filter($rides, ‘filterByPossibility’);
+        $possibleTravels = array_filter($rides, function ($ride) use ($t, $stepsLeft) {
+          return $ride->isPossible($t, $stepsLeft);
+        });
+
 // get the first possible travel
-        $ridesPerCar[$car->id].push($possibleTravels[0]);
+        if (!isset($ridesPerCar[$car->id])) {
+          $ridesPerCar[$car->id] = [];
+        }
+
+        array_push($ridesPerCar[$car->id], $possibleTravels[0]);
+
+        $car->isFree = false;
         $possibleTravels[0]->done = true;
-        $car->stepsToGo = $possibleTravels[0]->distance();
+        $car->stepsToGo = $possibleTravels[0]->getDistance();
       } else {
         $car->stepsToGo--;
       }
     }
   }
+
+  //var_dump($ridesPerCar);
+
 //Funzione ordinamento
   function sortDistance($a, $b) {
     $ad = $a->getDistance();
@@ -89,22 +104,17 @@ function arrayToFile($array) {
     return 1;
   };
 
-//Funzione filtro per possibilità
-// 
-function filterByPossibility($ride) {
-  return $ride->isPossible($t, $stepsLeft);
-};
 
 
 //Classe car
 class Car {
   public $id;
   public $position = ["x" => 0, "y" => 0];
-// Step mancanti alla fine dell’eventuale ride in corso
+// Step mancanti alla fine dell'eventuale ride in corso
   public $stepsToGo = 0; 
 
   public function isFree(){
-    return $this->$stepsToGo === 0;
+    return $this->stepsToGo === 0;
   }
 }
 //Classe ride
@@ -118,6 +128,7 @@ class Ride {
   public $latestFinish;
 
   public function __construct($start, $end, $earliestStart, $latestFinish) {
+    $this->id = rand();
     $this->start = $start;
     $this->end = $end;
     $this->$earliestStart = $earliestStart;
@@ -127,19 +138,13 @@ class Ride {
 
 
   public function getDistance() {
-    try {
-      abs($this->start["x"] - $this->end["x"]) + abs($this->start["y"] - $this->end["y"]);
-    }
-    catch (\Exception $e) {
-      echo ($this->start["x"]." ".$this->end["x"]." ".$this->start["y"]." ".$this->end["y"]);
-    }
-    //return abs($this->start["x"] - $this->end["x"]) + abs($this->start["y"] - $this->end["y"]);
+    return abs($this->start["x"] - $this->end["x"]) + abs($this->start["y"] - $this->end["y"]);
   }
 
   public function isPossible($stepIndex, $stepsLeft) {
     return $this->distance <= $stepsLeft && 
     $this->earliestStart >= $stepIndex &&
-    $this->$latestFinish <= $stepIndex; 
+    $this->latestFinish <= $stepIndex; 
   }
 }
 
