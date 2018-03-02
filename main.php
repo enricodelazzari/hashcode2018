@@ -38,7 +38,16 @@ function arrayToFile($array) {
   unset($array[0]);
   $rides = []; // array di Ride
   foreach($array as $rows) {
-    $rides[] = new Ride([$rows[0], $rows[1]], [$rows[2], $rows[3]], $rows[4], $rows[5]);
+    $rides[] = new Ride([
+        "x" => $rows[0],
+        "y" => $rows[1]
+      ],
+      [
+        "x" => $rows[2],
+        "y" => $rows[3]
+      ],
+      $rows[4],
+      $rows[5]);
   }
 
   foreach(range(0, $F-1) as $n) {
@@ -48,7 +57,7 @@ function arrayToFile($array) {
   $ridesPerCar = []; // array di associazioni tra Car e Ride
 
   //Ciclo principale
-  foreach(range(0, $t-1) as $step) {
+  foreach(range(0, $T-1) as $t) {
     $stepsLeft = $T - $t - 1;
     foreach($cars as $car) {
       if($car->isFree()) {
@@ -118,7 +127,13 @@ class Ride {
 
 
   public function getDistance() {
-    return abs($this->start["x"] - $this->end["x"]) + abs($this->start["y"] - $this->end["y"]);
+    try {
+      abs($this->start["x"] - $this->end["x"]) + abs($this->start["y"] - $this->end["y"]);
+    }
+    catch (\Exception $e) {
+      echo ($this->start["x"]." ".$this->end["x"]." ".$this->start["y"]." ".$this->end["y"]);
+    }
+    //return abs($this->start["x"] - $this->end["x"]) + abs($this->start["y"] - $this->end["y"]);
   }
 
   public function isPossible($stepIndex, $stepsLeft) {
