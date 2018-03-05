@@ -86,29 +86,44 @@ class Distributor
         $ridesPerCar = []; // array di associazioni tra Car e Ride
         foreach (range(0, $this->T - 1) as $t) {
             $stepsLeft = $this->T - $t;
+            echo $stepsLeft."\n";
 
             foreach ($this->cars as $car) {
                 if ($car->isFree()) {
                     // sort travel by distance from car
-                    $sortedRides = $this->sortRidesByDistanceFromCar($car);
+                    // $sortedRides = $this->sortRidesByDistanceFromCar($car);
                     // get only possible travels
-                    $possibleTravels = array_filter($sortedRides, function (Ride $ride) use ($t, $stepsLeft) {
-                        return $ride->isPossible($t, $stepsLeft);
-                    });
+                    // $possibleTravels = array_filter($sortedRides, // function (Ride $ride) use ($t, $stepsLeft) {
+                    //     return $ride->isPossible($t, $stepsLeft);
+                    // });
 
-                    $possibleTravels = array_values($possibleTravels); // reset index from 0
+                    // Select first available ride and remove it from rides array
+                    $travel = null;
+                    foreach($this->rides as $k => $ride) {
+                        if(!$ride->done) {
+                            $travel = $ride;
+                            unset($this->rides[$k]);
+                            break;
+                        }
+                    } 
 
-                    if (sizeof($possibleTravels) !== 0) {
+                    // $possibleTravels = array_values($possibleTravels); // reset index from 0
+
+                    // if (sizeof($possibleTravels) !== 0) {
+                    if ($travel) {
                         // get the first possible travel
                         if (!isset($ridesPerCar[$car->id])) {
                             $ridesPerCar[$car->id] = [];
                         }
 
-                        array_push($ridesPerCar[$car->id], $possibleTravels[0]);
+                        array_push($ridesPerCar[$car->id], $travel);
+                        // array_push($ridesPerCar[$car->id], $possibleTravels[0]);
 
                         $car->isFree = false;
-                        $possibleTravels[0]->done = true;
-                        $car->stepsToGo = $possibleTravels[0]->getDistance();
+                        $travel->done = true;
+                        $car->stepsToGo = $travel->getDistance();
+                        // $possibleTravels[0]->done = true;
+                        // $car->stepsToGo = $possibleTravels[0]->getDistance();
                     }
                 } else {
                     $car->stepsToGo--;
